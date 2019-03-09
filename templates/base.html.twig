@@ -1,12 +1,80 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {% block stylesheets %}{% endblock %}
-    </head>
-    <body>
-        {% block body %}{% endblock %}
-        {% block javascripts %}{% endblock %}
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Tile.demo{% endblock %}</title>
+    {% block stylesheets %}
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    {% endblock %}
+</head>
+<body>
+{% block body %}
+    <div class="container">
+        <h3>Upload image, minimal size 640X480px</h3>
+        {{ form_start(fileForm) }}
+        <div class="form-group">
+            {{ form_widget(fileForm.file) }}
+        </div>
+        <button id="imageFormSubmit" type="submit">Upload</button>
+        {{ form_end(fileForm) }}
+        <div id="formError">
+        </div>
+    </div>
+    <div class="container">
+        <div id="imageList">
+            {% for image in uploadedList %}
+                <img src="{{ asset(image) }}">
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+{% block javascripts %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+
+        function onError(message) {
+            $("#formError").append('<div class="alert alert-danger">' + message + '</div>')
+        }
+
+        function clearErrors()
+        {
+            $(".alert").remove();
+        }
+
+        function addImage(image)
+        {
+            let link = "/"+image;
+            $("#imageList").append('<img src="'+link+'">');
+        }
+
+        $(document).ready(function () {
+            $("form[name=image_form]").submit(function (event) {
+                event.preventDefault();
+                let formData = new FormData(this);
+                $.ajaxSetup({
+                    url: "{{ path('upload_image') }}",
+                    global: false,
+                    type: "POST",
+                    processData: false,
+                    contentType: false,
+                    success: function (responce) {
+                        if (responce.errors !== undefined) {
+                            responce.errors.map(function (e) {
+                                onError(e);
+                            })
+                        }
+                        if (responce.image !== undefined) {
+                            clearErrors();
+                            addImage(responce.image);
+                        }
+                    }
+                });
+                $.ajax({data: formData});
+
+            });
+        });
+    </script>
+{% endblock %}
+</body>
 </html>
